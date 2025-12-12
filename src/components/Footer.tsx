@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
-import { Heart, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <motion.footer 
+    <motion.footer
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.3 }}
@@ -11,11 +11,10 @@ const Footer = () => {
     >
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-1.5">
-          <span>Built with</span>
-          <Heart className="w-4 h-4 text-destructive fill-destructive" aria-hidden="true" />
+          <span>Made by Subham</span>
           <span>for accessibility</span>
         </div>
-        
+
         <motion.a
           whileHover={{ scale: 1.02 }}
           href="https://www.w3.org/WAI/WCAG21/Understanding/use-of-color.html"

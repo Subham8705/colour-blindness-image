@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Eye, Info, Moon, Sun } from 'lucide-react';
+import { Info, Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface HeaderProps {
@@ -21,30 +21,39 @@ const Header = ({ onInfoClick }: HeaderProps) => {
   };
 
   return (
-    <motion.header 
+    <motion.header
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="glass-panel px-6 py-5 flex items-center justify-between"
     >
       <div className="flex items-center gap-4">
-        <motion.div 
+        <motion.div
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10"
+          className="p-1 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 overflow-hidden"
         >
-          <Eye className="w-6 h-6 text-primary" aria-hidden="true" />
+          <img
+            src="https://res.cloudinary.com/dpa0sb1tm/image/upload/v1750759481/logobg_hu36yx.webp"
+            alt="Logo"
+            className="w-9 h-9 object-cover rounded-lg"
+          />
         </motion.div>
         <div>
-          <h1 className="text-lg font-semibold text-foreground tracking-tight">
-            Color Blindness Simulator
-          </h1>
+          <div className="flex items-baseline gap-2">
+            <h1 className="text-lg font-semibold text-foreground tracking-tight">
+              Color Blindness Simulator
+            </h1>
+            <span className="text-[10px] text-muted-foreground font-medium">
+              made by subham
+            </span>
+          </div>
           <p className="text-sm text-muted-foreground">
             Visualize color vision deficiencies
           </p>
         </div>
       </div>
-      
+
       <div className="flex items-center gap-2">
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -59,7 +68,7 @@ const Header = ({ onInfoClick }: HeaderProps) => {
             <Moon className="w-5 h-5 text-foreground" />
           )}
         </motion.button>
-        
+
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
