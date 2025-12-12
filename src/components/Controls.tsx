@@ -76,7 +76,7 @@ const Controls = ({
               : 'text-muted-foreground hover:text-foreground'
               }`}
           >
-            Correct
+            Corrected
           </button>
         </div>
       </div>
