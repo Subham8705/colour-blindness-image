@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
-import { SimulationType, applySimulation, calculatePreviewDimensions } from '@/utils/colorTransforms';
+import { SimulationType, applySimulation, applyDaltonization, calculatePreviewDimensions } from '@/utils/colorTransforms';
 import CompareSlider from './CompareSlider';
 
 interface CanvasViewerProps {
@@ -10,6 +10,7 @@ interface CanvasViewerProps {
   simulationType: SimulationType;
   intensity: number;
   onProcessedImageReady: (canvas: HTMLCanvasElement) => void;
+  mode?: 'simulate' | 'correct';
 }
 
 const MAX_PREVIEW_WIDTH = 800;
@@ -23,39 +24,40 @@ const CanvasViewer = ({
   simulationType,
   intensity,
   onProcessedImageReady,
+  mode = 'simulate',
 }: CanvasViewerProps) => {
   const originalCanvasRef = useRef<HTMLCanvasElement>(null);
   const simulatedCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number>();
   const lastProcessTimeRef = useRef<number>(0);
-  
+
   const [dimensions, setDimensions] = useState({ width: 400, height: 300 });
   const [sliderPosition, setSliderPosition] = useState(50);
 
   const processFrame = useCallback((source: HTMLImageElement | HTMLVideoElement) => {
     const originalCanvas = originalCanvasRef.current;
     const simulatedCanvas = simulatedCanvasRef.current;
-    
+
     if (!originalCanvas || !simulatedCanvas) return;
-    
+
     const originalCtx = originalCanvas.getContext('2d', { willReadFrequently: true });
     const simulatedCtx = simulatedCanvas.getContext('2d', { willReadFrequently: true });
-    
+
     if (!originalCtx || !simulatedCtx) return;
-    
+
     const sourceWidth = source instanceof HTMLImageElement ? source.naturalWidth : source.videoWidth;
     const sourceHeight = source instanceof HTMLImageElement ? source.naturalHeight : source.videoHeight;
-    
+
     if (sourceWidth === 0 || sourceHeight === 0) return;
-    
+
     const { width, height } = calculatePreviewDimensions(
       sourceWidth,
       sourceHeight,
       MAX_PREVIEW_WIDTH,
       MAX_PREVIEW_HEIGHT
     );
-    
+
     if (originalCanvas.width !== width || originalCanvas.height !== height) {
       originalCanvas.width = width;
       originalCanvas.height = height;
@@ -63,16 +65,20 @@ const CanvasViewer = ({
       simulatedCanvas.height = height;
       setDimensions({ width, height });
     }
-    
+
     originalCtx.drawImage(source, 0, 0, width, height);
-    
+
     const imageData = originalCtx.getImageData(0, 0, width, height);
-    const simulatedData = applySimulation(imageData, simulationType, intensity);
-    
+
+    // Apply simulation or correction
+    const simulatedData = mode === 'correct'
+      ? applyDaltonization(imageData, simulationType, intensity)
+      : applySimulation(imageData, simulationType, intensity);
+
     simulatedCtx.putImageData(simulatedData, 0, 0);
-    
+
     onProcessedImageReady(simulatedCanvas);
-  }, [simulationType, intensity, onProcessedImageReady]);
+  }, [simulationType, intensity, onProcessedImageReady, mode]);
 
   useEffect(() => {
     if (!isWebcamActive || !videoRef.current) {
@@ -81,10 +87,10 @@ const CanvasViewer = ({
       }
       return;
     }
-    
+
     const video = videoRef.current;
     const frameInterval = 1000 / WEBCAM_FPS;
-    
+
     const processWebcamFrame = (timestamp: number) => {
       if (timestamp - lastProcessTimeRef.current >= frameInterval) {
         if (video.readyState >= video.HAVE_CURRENT_DATA) {
@@ -94,9 +100,9 @@ const CanvasViewer = ({
       }
       animationFrameRef.current = requestAnimationFrame(processWebcamFrame);
     };
-    
+
     animationFrameRef.current = requestAnimationFrame(processWebcamFrame);
-    
+
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -114,7 +120,7 @@ const CanvasViewer = ({
 
   if (!hasContent) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="canvas-container flex items-center justify-center h-80 bg-gradient-to-br from-canvas to-secondary/30"
@@ -137,10 +143,10 @@ const CanvasViewer = ({
   }
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      ref={containerRef} 
+      ref={containerRef}
       className="canvas-container relative overflow-hidden"
     >
       <CompareSlider
@@ -157,7 +163,7 @@ const CanvasViewer = ({
           }}
           aria-label="Original image"
         />
-        
+
         <canvas
           ref={simulatedCanvasRef}
           className="absolute top-0 left-0"
@@ -167,13 +173,13 @@ const CanvasViewer = ({
           aria-label="Simulated image showing color blindness view"
         />
       </CompareSlider>
-      
+
       {/* Labels */}
       <div className="absolute bottom-4 left-4 px-3 py-1.5 rounded-lg bg-foreground/90 backdrop-blur-sm text-background text-xs font-medium shadow-lg">
         Original
       </div>
       <div className="absolute bottom-4 right-4 px-3 py-1.5 rounded-lg bg-primary backdrop-blur-sm text-primary-foreground text-xs font-medium shadow-lg">
-        Simulated
+        {mode === 'correct' ? 'Corrected' : 'Simulated'}
       </div>
     </motion.div>
   );

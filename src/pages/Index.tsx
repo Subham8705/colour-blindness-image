@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { SimulationType, applySimulation } from '@/utils/colorTransforms';
+import { SimulationType, applySimulation, applyDaltonization } from '@/utils/colorTransforms';
 import Header from '@/components/Header';
 import Controls from '@/components/Controls';
 import Uploader from '@/components/Uploader';
@@ -13,18 +13,19 @@ import Footer from '@/components/Footer';
 const Index = () => {
   const [sourceImage, setSourceImage] = useState<HTMLImageElement | null>(null);
   const [simulationType, setSimulationType] = useState<SimulationType>('deuteranopia');
+  const [mode, setMode] = useState<'simulate' | 'correct'>('simulate');
   const [intensity, setIntensity] = useState(100);
   const [isWebcamActive, setIsWebcamActive] = useState(false);
   const [isWebcamLoading, setIsWebcamLoading] = useState(false);
   const [webcamError, setWebcamError] = useState<string | null>(null);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
-  
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const processedCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [debouncedIntensity, setDebouncedIntensity] = useState(intensity);
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedIntensity(intensity);
@@ -46,7 +47,7 @@ const Index = () => {
     } else {
       setIsWebcamLoading(true);
       setWebcamError(null);
-      
+
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -55,16 +56,16 @@ const Index = () => {
             facingMode: 'user',
           },
         });
-        
+
         if (!videoRef.current) {
           videoRef.current = document.createElement('video');
           videoRef.current.playsInline = true;
           videoRef.current.muted = true;
         }
-        
+
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
-        
+
         streamRef.current = stream;
         setSourceImage(null);
         setIsWebcamActive(true);
@@ -115,22 +116,22 @@ const Index = () => {
 
   const handleDownload = useCallback(() => {
     if (!sourceImage || !processedCanvasRef.current) return;
-    
+
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    
+
     if (!ctx) return;
-    
+
     canvas.width = sourceImage.naturalWidth;
     canvas.height = sourceImage.naturalHeight;
-    
+
     ctx.drawImage(sourceImage, 0, 0);
-    
+
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const simulatedData = applySimulation(imageData, simulationType, debouncedIntensity);
-    
+
     ctx.putImageData(simulatedData, 0, 0);
-    
+
     const link = document.createElement('a');
     link.download = `colorblind-simulation-${simulationType}-${debouncedIntensity}pct.png`;
     link.href = canvas.toDataURL('image/png');
@@ -150,10 +151,10 @@ const Index = () => {
 
       <div className="flex-1 container mx-auto px-4 py-6 space-y-5 max-w-7xl">
         <Header onInfoClick={() => setIsInfoOpen(true)} />
-        
+
         <main id="main-content" className="grid lg:grid-cols-[340px_1fr] gap-5">
           {/* Controls Panel */}
-          <motion.aside 
+          <motion.aside
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
@@ -170,7 +171,7 @@ const Index = () => {
                     hasImage={!!sourceImage}
                     onClear={handleClear}
                   />
-                  
+
                   <div className="relative py-2">
                     <div className="section-divider" />
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -179,7 +180,7 @@ const Index = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   <WebcamToggle
                     isActive={isWebcamActive}
                     onToggle={toggleWebcam}
@@ -200,6 +201,8 @@ const Index = () => {
                   onSimulationChange={setSimulationType}
                   intensity={intensity}
                   onIntensityChange={setIntensity}
+                  mode={mode}
+                  onModeChange={setMode}
                 />
               </div>
 
@@ -220,7 +223,7 @@ const Index = () => {
           </motion.aside>
 
           {/* Canvas Viewer */}
-          <motion.section 
+          <motion.section
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4, delay: 0.15 }}
@@ -242,6 +245,7 @@ const Index = () => {
                 videoRef={videoRef}
                 isWebcamActive={isWebcamActive}
                 simulationType={simulationType}
+                mode={mode}
                 intensity={debouncedIntensity}
                 onProcessedImageReady={handleProcessedImageReady}
               />
@@ -253,7 +257,7 @@ const Index = () => {
       </div>
 
       <InfoPanel isOpen={isInfoOpen} onClose={() => setIsInfoOpen(false)} />
-    </div>
+    </div >
   );
 };
 
