@@ -15,7 +15,6 @@ A polished, accessible tool that lets users upload images or use their webcam to
   - **Tritanopia** (blue-blindness) - rare
   - **Achromatopsia** (complete color blindness) - rare
 - **Accessible Tools (New!)**:
-  - **Contrast Checker**: Pick two colors from the image to verify WCAG compliance (AA/AAA).
   - **Split-View Download**: Export images side-by-side (Original vs. Simulated) for easy comparison.
 - **Interactive Comparison**: Draggable slider to compare original vs. simulated side-by-side
 - **Download**: Export simulated images at full resolution as PNG
