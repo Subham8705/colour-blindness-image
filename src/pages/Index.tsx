@@ -114,7 +114,7 @@ const Index = () => {
     processedCanvasRef.current = canvas;
   }, []);
 
-  const handleDownload = useCallback(() => {
+  const handleDownload = useCallback((type: 'full' | 'split') => {
     if (!sourceImage || !processedCanvasRef.current) return;
 
     const canvas = document.createElement('canvas');
@@ -125,18 +125,64 @@ const Index = () => {
     canvas.width = sourceImage.naturalWidth;
     canvas.height = sourceImage.naturalHeight;
 
+    // Draw original image first (covers entire canvas)
     ctx.drawImage(sourceImage, 0, 0);
 
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const simulatedData = applySimulation(imageData, simulationType, debouncedIntensity);
+    // If split view, we only want to apply simulation to the right half
+    if (type === 'split') {
+      const halfWidth = Math.floor(canvas.width / 2);
 
-    ctx.putImageData(simulatedData, 0, 0);
+      // We need a temp canvas to generate the full simulation safely
+      // (because applySimulation processes the whole ImageData)
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+      const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+
+      if (!tempCtx) return;
+
+      // Draw original to temp
+      tempCtx.drawImage(sourceImage, 0, 0);
+
+      // Process temp canvas
+      const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      const simulatedData = mode === 'correct'
+        ? applyDaltonization(imageData, simulationType, debouncedIntensity)
+        : applySimulation(imageData, simulationType, debouncedIntensity);
+
+      tempCtx.putImageData(simulatedData, 0, 0);
+
+      // Draw RIGHT HALF of temp canvas to RIGHT HALF of main canvas
+      // drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+      ctx.drawImage(
+        tempCanvas,
+        halfWidth, 0, halfWidth, canvas.height, // Source: Right half
+        halfWidth, 0, halfWidth, canvas.height  // Dest: Right half
+      );
+
+      // Draw a subtle divider line
+      ctx.beginPath();
+      ctx.moveTo(halfWidth, 0);
+      ctx.lineTo(halfWidth, canvas.height);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.lineWidth = Math.max(2, canvas.width * 0.002); // Dynamic width
+      ctx.stroke();
+
+    } else {
+      // Full simulation
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const simulatedData = mode === 'correct'
+        ? applyDaltonization(imageData, simulationType, debouncedIntensity)
+        : applySimulation(imageData, simulationType, debouncedIntensity);
+
+      ctx.putImageData(simulatedData, 0, 0);
+    }
 
     const link = document.createElement('a');
-    link.download = `colorblind-simulation-${simulationType}-${debouncedIntensity}pct.png`;
+    link.download = `colorblind-${type}-${mode}-${simulationType}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
-  }, [sourceImage, simulationType, debouncedIntensity]);
+  }, [sourceImage, simulationType, debouncedIntensity, mode]);
 
   const hasContent = sourceImage || isWebcamActive;
 
