@@ -147,7 +147,7 @@ const CanvasViewer = ({
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       ref={containerRef}
-      className="canvas-container relative overflow-hidden"
+      className="canvas-container relative overflow-hidden flex justify-center bg-black/5"
     >
       <CompareSlider
         position={sliderPosition}

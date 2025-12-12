@@ -22,11 +22,11 @@ const CompareSlider = ({
 
   const handleMove = useCallback((clientX: number) => {
     if (!containerRef.current) return;
-    
+
     const rect = containerRef.current.getBoundingClientRect();
     const x = clientX - rect.left;
     const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-    
+
     onPositionChange(percentage);
   }, [onPositionChange]);
 
@@ -69,7 +69,7 @@ const CompareSlider = ({
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     const step = e.shiftKey ? 10 : 1;
-    
+
     if (e.key === 'ArrowLeft') {
       e.preventDefault();
       onPositionChange(Math.max(0, position - step));
@@ -96,17 +96,17 @@ const CompareSlider = ({
       onKeyDown={handleKeyDown}
     >
       {children}
-      
+
       {/* Slider handle */}
       <motion.div
         className="absolute top-0 bottom-0 w-0.5 -translate-x-1/2"
-        style={{ 
+        style={{
           left: `${position}%`,
           background: 'linear-gradient(to bottom, hsl(var(--primary)), hsl(var(--primary) / 0.8))',
         }}
         animate={{
-          boxShadow: isDragging 
-            ? '0 0 20px 2px hsl(var(--primary) / 0.4)' 
+          boxShadow: isDragging
+            ? '0 0 20px 2px hsl(var(--primary) / 0.4)'
             : '0 0 10px 1px hsl(var(--primary) / 0.2)',
         }}
       >
@@ -114,8 +114,8 @@ const CompareSlider = ({
         <motion.div
           animate={{
             scale: isDragging ? 1.1 : 1,
-            boxShadow: isDragging 
-              ? 'var(--shadow-glow)' 
+            boxShadow: isDragging
+              ? 'var(--shadow-glow)'
               : 'var(--shadow-md)',
           }}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-14 rounded-full bg-gradient-to-b from-primary to-primary/90 flex items-center justify-center border-2 border-primary-foreground/20"
