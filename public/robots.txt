@@ -12,3 +12,5 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://colour-blindness-simulator-subham.vercel.app/sitemap.xml
